@@ -12,7 +12,7 @@ def encode_onehot(labels):
     return labels_onehot
 
 
-def load_data(path="../data/cora/", dataset="cora"):
+def load_data_old(path="../data/cora/", dataset="cora"):
     """Load citation network dataset (cora only for now)"""
     print('Loading {} dataset...'.format(dataset))
 
@@ -52,6 +52,120 @@ def load_data(path="../data/cora/", dataset="cora"):
 
     return adj, features, labels, idx_train, idx_val, idx_test
 
+
+def create_adj(train_triples, entity_set, relation_set):
+    id2idx = dict()
+    # relation_id2idx = dict()
+    count = 0
+    for ele in entity_set:
+        id2idx[ele] = count 
+        count += 1
+    for ele in relation_set:
+        id2idx[ele] = count 
+        count += 1
+    
+    entity_count_dict = dict()
+    relation_count_dict = dict()
+    entity_entity_count_dict = dict()
+    entity_relation_count_dict = dict()
+
+    def update_count(ele, dictt, id2idx):
+        if id2idx[ele] not in dictt:
+            dictt[id2idx[ele]] = 1
+        else:
+            dictt[id2idx[ele]] += 1
+    
+    def update_count_special(ele1, ele2, dictt, id2idx):
+        source = str(id2idx[ele1])
+        target = str(id2idx[ele2])
+        key = "{}_{}".format(source, target)
+        if key not in dictt:
+            dictt[key] = 1
+        else:
+            dictt[key] += 1
+
+    for i in range(len(train_triples)):
+        this_triple = train_triples[i]
+        entity1, relation, entity2 = this_triple[0], this_triple[1], this_triple[2]
+        update_count(entity1, entity_count_dict, id2idx)
+        update_count(entity2, entity_count_dict, id2idx)
+        update_count(relation, relation_count_dict, id2idx)
+        update_count_special(entity1, entity2, entity_entity_count_dict, id2idx)
+        update_count_special(entity1, relation, entity_relation_count_dict, id2idx)
+        update_count_special(entity2, relation, entity_relation_count_dict, id2idx)
+    
+    edges = []
+    values = []
+    for ele in train_triples:
+        entity1, relation, entity2 = ele[0], ele[1], ele[2]
+        edges.append([id2idx[entity1], id2idx[entity2]])
+        edges.append([id2idx[entity1], id2idx[relation]])
+        edges.append([id2idx[relation], id2idx[entity2]])
+        e1_count = entity_count_dict[id2idx[entity1]] / len(train_triples)
+        e2_count = entity_count_dict[id2idx[entity2]] / len(train_triples)
+        r_count = relation_count_dict[id2idx[relation]] / len(train_triples)
+        e1e2_count = entity_entity_count_dict["{}_{}".format(id2idx[entity1], id2idx[entity2])] / len(train_triples)
+        e1r_count = entity_relation_count_dict["{}_{}".format(id2idx[entity1], id2idx[relation])] / len(train_triples)
+        e2r_count = entity_relation_count_dict["{}_{}".format(id2idx[entity2], id2idx[relation])] / len(train_triples)
+        values.append(e1e2_count / (e1_count * e2_count))
+        values.append(e1r_count / (e1_count * r_count))
+        values.append(e2r_count / (e2_count * r_count))
+
+    edges = np.array(edges)
+    values = np.array(values)
+    import pdb
+    pdb.set_trace()
+    adj = sp.coo_matrix((values, (edges[:, 0], edges[:, 1])), shape=(max(list(id2idx.values())) + 1,  max(list(id2idx.values())) + 1))
+    adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
+    adj = normalize(adj + sp.eye(adj.shape[0]))
+    adj = sparse_mx_to_torch_sparse_tensor(adj)
+    return adj, id2idx
+
+
+def load_data(path_train, path_test, path_val):
+    entity_set = set()
+    relation_set = set()
+    train_triples = []
+    val_triples = []
+    test_triples = []
+    with open(path_train, 'r', encoding='utf-8') as file:
+        for line in file:
+            data_line = line.split()
+            if data_line[0] not in entity_set:
+                entity_set.add(data_line[0])
+            if data_line[-1] not in entity_set:
+                entity_set.add(data_line[-1])
+            if data_line[1] not in relation_set:
+                relation_set.add(data_line[1])
+            train_triples.append(data_line)
+    file.close()
+
+    with open(path_val, 'r', encoding='utf-8') as file:
+        for line in file:
+            data_line = line.split()
+            if data_line[0] not in entity_set:
+                entity_set.add(data_line[0])
+            if data_line[-1] not in entity_set:
+                entity_set.add(data_line[-1])
+            if data_line[1] not in relation_set:
+                relation_set.add(data_line[1])
+            val_triples.append(data_line)
+    file.close()
+
+    with open(path_test, 'r', encoding='utf-8') as file:
+        for line in file:
+            data_line = line.split()
+            if data_line[0] not in entity_set:
+                entity_set.add(data_line[0])
+            if data_line[-1] not in entity_set:
+                entity_set.add(data_line[-1])
+            if data_line[1] not in relation_set:
+                relation_set.add(data_line[1])
+            test_triples.append(data_line)
+    file.close()
+
+    return entity_set, relation_set, train_triples, val_triples, test_triples
+            
 
 def normalize(mx):
     """Row-normalize sparse matrix"""
