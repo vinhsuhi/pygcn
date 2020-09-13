@@ -137,6 +137,9 @@ for epoch in range(args.epochs):
         train_relations = train_batch[:, 1]
         train_entities = torch.LongTensor(train_entities)
         train_relations = torch.LongTensor(train_relations)
+        if args.cuda:
+            train_entities = train_entities.cuda()
+            train_relations = train_relations.cuda()
         train(epoch, train_entities, train_relations)
 print("Optimization Finished!")
 print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
