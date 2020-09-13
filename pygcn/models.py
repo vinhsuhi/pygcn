@@ -7,7 +7,7 @@ import math
 class GCN(nn.Module):
     def __init__(self, nfeat, nhid, output_dim, dropout, adj, n_nodes, args=None):
         super(GCN, self).__init__()
-        self.embedings = nn.Embedding(n_nodes, nfeat)
+        self.embeddings = nn.Embedding(n_nodes, nfeat)
         self.loss = nn.BCELoss()
         self.gc1 = GraphConvolution(nfeat, nhid, adj=adj)
         self.gc2 = GraphConvolution(nhid, output_dim, adj=adj)
@@ -34,7 +34,7 @@ class GCN(nn.Module):
 
 
     def forward(self, e1, rel, X):
-        emb_initial = self.embedings(X)
+        emb_initial = self.embeddings(X)
         x = self.gc1(emb_initial)
         x = self.bn3(x)
         x = F.tanh(x)
@@ -60,7 +60,7 @@ class GCN(nn.Module):
         pred = F.sigmoid(x)
         return pred
 
-        # emb1 = self.embedings(index)
+        # emb1 = self.embeddings(index)
         # x = F.relu(self.gc1(emb1))
         # x = F.dropout(x, self.dropout, training=self.training)
         # x = self.gc2(x)
