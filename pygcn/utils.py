@@ -113,8 +113,6 @@ def create_adj(train_triples, entity_set, relation_set):
 
     edges = np.array(edges)
     values = np.array(values)
-    import pdb
-    pdb.set_trace()
     adj = sp.coo_matrix((values, (edges[:, 0], edges[:, 1])), shape=(max(list(id2idx.values())) + 1,  max(list(id2idx.values())) + 1))
     adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
     adj = normalize(adj + sp.eye(adj.shape[0]))
