@@ -135,6 +135,8 @@ for epoch in range(args.epochs):
         train_batch = train_triple_ids[iter * BATCHSIZE: (iter + 1) * BATCHSIZE]
         train_entities = train_batch[:, 0]
         train_relations = train_batch[:, 1]
+        train_entities = torch.LongTensor(train_entities)
+        test_entities = torch.LongTensor(test_entities)
         train(epoch, train_entities, train_relations)
 print("Optimization Finished!")
 print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
