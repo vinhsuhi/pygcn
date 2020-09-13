@@ -37,7 +37,9 @@ class GCN(nn.Module):
     def forward(self, e1, rel, X):
         emb_initial = self.embeddings(X)
         x = self.gc1(emb_initial)
-        x = self.bn3(x)
+        import pdb
+        pdb.set_trace()
+        # x = self.bn3(x)
         x = F.tanh(x)
         x = F.dropout(x, self.dropout, training=self.training)
         # x = self.bn4(self.gc2(x))
