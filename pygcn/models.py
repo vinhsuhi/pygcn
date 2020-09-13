@@ -3,6 +3,7 @@ import torch.nn.functional as F
 from pygcn.layers import GraphConvolution
 from torch.nn.init import xavier_normal_, xavier_uniform_
 import math
+import torch
 
 class GCN(nn.Module):
     def __init__(self, nfeat, nhid, output_dim, dropout, adj, n_nodes, args=None):
