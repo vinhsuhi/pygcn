@@ -70,7 +70,7 @@ n_nodes = adj.shape[0]
 
 model = GCN(nfeat=args.n_feats,
             nhid=args.hidden,
-            output_dim = 128,
+            output_dim = 200,
             dropout=args.dropout, adj = adj, n_nodes=n_nodes, args=args)
 
 optimizer = optim.Adam(model.parameters(),
@@ -124,7 +124,7 @@ def train(epoch, e1, rel):
 
 # Train model
 t_total = time.time()
-BATCHSIZE = 2048
+BATCHSIZE = args.batch_size
 data_size = len(train_triples)
 niters = data_size // BATCHSIZE
 if data_size % BATCHSIZE > 0:
